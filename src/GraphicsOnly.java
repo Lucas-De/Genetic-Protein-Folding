@@ -43,6 +43,11 @@ public class GraphicsOnly extends JComponent implements ChangeListener {
 					g = 102;   //green
 					b = 107;   //blue
 					//gives yellow
+				}else if (code == 'C') {
+					r = 78;   //red
+					g = 142;   //green
+					b = 233;   //blue
+					//gives yellow
 				}else{
 					r = 96;   //red
 					g = 105;   //green
@@ -161,7 +166,7 @@ public class GraphicsOnly extends JComponent implements ChangeListener {
     }
     
     JSlider getControl() {
-        JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 1000, 100);
+        JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 1000, 700);
         slider.setMajorTickSpacing(200);
         slider.setMinorTickSpacing(25);
         slider.setPaintTicks(true);
