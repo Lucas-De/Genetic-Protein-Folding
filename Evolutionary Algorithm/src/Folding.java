@@ -9,7 +9,7 @@ public class Folding {
 	int consecutiveH;
 	int consecutiveC;
 	int protection;
-	char[][] canvas;
+	static char[][] canvas;
 	int score;
 	ArrayList<Integer> pos = new ArrayList<Integer>();
 	Random random = new Random();
@@ -17,13 +17,13 @@ public class Folding {
 	Folding(amino[] foldingArray, int len) {
 		this.foldingArray = foldingArray;
 		this.len = len;
-		canvas = new char[len * 2 + 10][len * 2 + 10];
+		if(canvas==null)canvas = new char[len * 2 + 10][len * 2 + 10];
 	}
 
 	Folding(String chain) {
 
 		len = chain.length();
-		canvas = new char[len * 2 + 10][len * 2 + 10];
+		if(canvas==null)canvas = new char[len * 2 + 10][len * 2 + 10];
 		foldingArray = new amino[len];
 		for (int i = 0; i < len; i++) {
 			foldingArray[i] = new amino(chain.charAt(i), 2);
@@ -36,7 +36,12 @@ public class Folding {
 		int s = random.nextInt(len-l-1)+1;
 		int e = (l + s < len) ? l + s : len - 1;
 		Setup_Canvas_for_redraw(s, e);
-	}
+		for(int a=0;a<canvas.length;a++){
+			for(int b=0;b<canvas.length;b++){
+				canvas[a][b]=0;
+			}
+		}
+	} 
 
 
 	void redraw(int s, int e, int[] S,int[] E, int distX,int distY) {
@@ -59,8 +64,6 @@ public class Folding {
 				int newPos=pos.get(random.nextInt(pos.size()));
 				pos.clear();
 				foldingArray[i].nextposition=newPos;
-				canvas[x][y]=foldingArray[i].type;
-//				canvas[x][y]='C';
 
 				
 				switch(newPos) {
@@ -69,12 +72,12 @@ public class Folding {
 				case 2:distX--;x+=1; break;
 				case 3:distY++;y-=1; break;
 				}
-//				canvas[x][y]='C';
+				canvas[x][y]=foldingArray[i+1].type;
+
 				
 				remaining_amino--;
 				flex=1+remaining_amino-Math.abs(distX)-Math.abs(distY);
 			}else {
-//				System.out.println("FAILED");
 				for(int j=0;j<len;j++){
 					foldingArray[j].nextposition=amino[j];
 				}
@@ -82,28 +85,13 @@ public class Folding {
 			}
 
 		}
-		canvas[x][y]=foldingArray[e].type;
-//		canvas[x][y]='C';
 		if(distX==1) { foldingArray[e].nextposition=2;}
 		else if(distX==-1) { foldingArray[e].nextposition=0;}
 		else if(distY==1) { foldingArray[e].nextposition=1;}
 		else if(distY==-1) { foldingArray[e].nextposition=3;}
 
-		getStability(foldingArray);
-		
-		
-		for(int a=0;a<canvas.length;a++){
-			for(int b=0;b<canvas.length;b++){
-				canvas[a][b]=0;
-			}
-		}
-//		System.out.println("M :"+ distX+" "+distY);
-//		for(int i=0;i<len;i++){
-//			System.out.print(foldingArray[i].nextposition+"  ");
-//		}
-//		System.out.println();
 
-		
+		getStability(foldingArray);
 	}
 	
 	void Setup_Canvas_for_redraw(int s,int e) {
@@ -271,6 +259,7 @@ public class Folding {
 				return true;
 			}
 		}
+		canvas[x][y] = aminoArray[len-1].type;
 		getStability(aminoArray);
 		eraseCanvas(aminoArray);
 		return false;
@@ -334,18 +323,6 @@ public class Folding {
 
 	}
 	
-	void mutate2() {
-		int mutationLocation = (int) Math.floor(Math.random() * len);
-
-		if (Math.random() < 0.5) {
-			if (!foldLeft(mutationLocation))
-				mutate2();
-		} else {
-			if (!foldRight(mutationLocation))
-				mutate2();
-		}
-
-	}
 
 	void mutate_type3() {
 		int mutationLocation = (int) Math.floor(Math.random() * len);
