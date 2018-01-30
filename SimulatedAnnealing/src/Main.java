@@ -7,15 +7,29 @@ public class Main {
 
     // Probability of each mutation type occurring. (Note that PROB_TYPE2 is
     // interpolated from values below)
-    final static double alpha = 0.8;
-    final static double beta = 0.1;
+    final static double beta = 0.10;
+    final static double alpha = (1.00 - 2.00 * beta);
     final static int repeat = 10000;
     static int max_stability = 0;
+
 
     // For visual, please change the boolean to True
     final static boolean GRAPHICS=false;
 
-    static String chain = "PPHPPHHPPHHPPPPPHHHHHHHHHHPPPPPPHHPPHHPPHPPHHHHH";
+
+
+//    static String chain = "HHPHHHPHPHHHPH"; //6
+//    static String chain = "HPHPPHHPHPPHPHHPPHPH"; //6
+//    static String chain = "PPPHHPPHHPPPPPPHHHHHHHPPHHPPPPHHPPHPP"; //10
+    static String chain = "HHPHPHPHPHPHHPHPPPHPPPHPPPPHPPPHPPHPHHPHPHPHPHPHPH"; //13
+
+
+
+//    static String chain = "HPHPPHHPHPPHPHHPPHPH"; //HC=4 SA=6
+//    static String chain = "PPPHHPPHHPPPPPHHHHHHHPPHHPPPPHHPPHPP"; //HC=6 SA=11
+//    static String chain = "PPHPPHHPPHHPPPPPHHHHHHHHHHPPPPPPHHPPHHPPHPPHHHHH"; //HC=11 SA=18
+//    static String chain = "PPHHHPHHHHHHHHPPPHHHHHHHHHHPHPPPHHHHHHHHHHHHPPPPHHHHHHPHHPHP"; //HC=23 SA=31
+
     static GraphicsOnly app;
     static Folding protein;
 
@@ -33,33 +47,47 @@ public class Main {
         protein.consecutiveC = consecutiveC();
         Folding protein_left = new Folding(chain);
         Folding protein_right = new Folding(chain);
+        Folding protein_no_fold = new Folding(chain);
         copy(protein_left,protein);
         copy(protein_right,protein);
+        copy(protein_no_fold, protein);
+
+        double smooth_alpha;
+        double smooth_beta;
+
         for(int i = 0; i < chain.length(); i++){
+            smooth_beta = beta * ( ((double)chain.length() - (double)i) / (double)chain.length() );
+            smooth_alpha = 1.00 - 2.00 * smooth_beta;
+
+            //System.out.println("prob1 " + prob_1 + ", "+ "prob2 " + prob_2+ ", "+i);
+
+
             double probability = Math.random();
-            int stability = Math.max(protein.stability, Math.max(left_fold_score(protein_left,i), right_fold_score(protein_right, i)));
+            int stability = Math.max(no_fold_score(protein_no_fold, i), Math.max(left_fold_score(protein_left,i), right_fold_score(protein_right, i)));
             if (stability == left_fold_score(protein_left,i)){
-                if (probability <= alpha){ protein.foldLeft(i); }
-                if (alpha < probability && probability <= alpha+beta){ protein.foldRight(i); }
-                if (probability > alpha+beta){ continue; }
+                if (probability <= smooth_alpha){ protein.foldLeft(i); }
+                if (smooth_alpha < probability && probability <= smooth_alpha+smooth_beta){ protein.foldRight(i); }
+                if (probability > smooth_alpha+smooth_beta){ continue; }
             }
             else if (stability == right_fold_score(protein_right,i)){
-                if (probability <= alpha){ protein.foldRight(i); }
-                if (alpha < probability && probability <= alpha+beta){ protein.foldLeft(i); }
-                if (probability > alpha+beta){ continue; }
+                if (probability <= smooth_alpha){ protein.foldRight(i); }
+                if (smooth_alpha < probability && probability <= smooth_alpha+smooth_beta){ protein.foldLeft(i); }
+                if (probability > smooth_alpha+smooth_beta){ continue; }
             }
-            else if (stability == protein.stability){
-                if (probability <= alpha){ continue; }
-                if (alpha < probability && probability <= alpha+beta){ protein.foldLeft(i); }
-                if (probability > alpha+beta){ protein.foldRight(i); }
+            else if (stability == no_fold_score(protein_no_fold, i)){
+                if (probability <= smooth_alpha){ continue; }
+                if (smooth_alpha < probability && probability <= smooth_alpha+smooth_beta){ protein.foldLeft(i); }
+                if (probability > smooth_alpha+smooth_beta){ protein.foldRight(i); }
                 continue;
             }
             else {
                 System.out.println(protein.stability + " Something is wrong!");
+                break;
 
             }
             copy(protein_left,protein);
             copy(protein_right,protein);
+            copy(protein_no_fold, protein);
             if (protein.stability > max_stability){
                 max_stability = protein.stability;
             }
@@ -86,23 +114,78 @@ public class Main {
     }
 
     static int left_fold_score(Folding current_protein, int i){
-//        Folding lefty = new Folding(chain);
-//        copy(lefty,current_protein);
         Folding lefty = current_protein;
         lefty.consecutiveH = consecutiveH();
         lefty.consecutiveC = consecutiveC();
+
+        //Folding to the left, keeping it straight after the first left fold
         lefty.foldLeft(i);
-        return lefty.stability;
+
+        //After folding to the left, folding to the left again
+        Folding lefty_left = new Folding(chain);
+        copy(lefty_left,lefty);
+        lefty_left.consecutiveH = consecutiveH();
+        lefty_left.consecutiveC = consecutiveC();
+        lefty_left.foldLeft(i+1);
+
+        //After folding to the left, folding to the right
+        Folding lefty_right = new Folding(chain);
+        copy(lefty_right,lefty);
+        lefty_right.consecutiveH = consecutiveH();
+        lefty_right.consecutiveC = consecutiveC();
+        lefty_right.foldRight(i+1);
+
+        //Sum of (left&left), (left&straight), and (left&right)
+        return lefty.stability + lefty_left.stability + lefty_right.stability;
     }
 
     static int right_fold_score(Folding current_protein, int i){
-//        Folding righty = new Folding(chain);
-//        copy(righty,current_protein);
         Folding righty = current_protein;
         righty.consecutiveH = consecutiveH();
         righty.consecutiveC = consecutiveC();
+
+        //Folding to the right, keeping it straight after the first right fold
         righty.foldRight(i);
-        return righty.stability;
+
+        //After folding to the right, folding to the left
+        Folding righty_left = new Folding(chain);
+        copy(righty_left,righty);
+        righty_left.consecutiveH = consecutiveH();
+        righty_left.consecutiveC = consecutiveC();
+        righty_left.foldLeft(i+1);
+
+        //After folding to the right, folding to the right again
+        Folding righty_right = new Folding(chain);
+        copy(righty_right,righty);
+        righty_right.consecutiveH = consecutiveH();
+        righty_right.consecutiveC = consecutiveC();
+        righty_right.foldRight(i+1);
+
+        //Sum of (right&left), (right&right), and (right&right)
+        return righty.stability + righty_left.stability + righty_right.stability;
+    }
+
+    static int no_fold_score(Folding current_protein, int i){
+        Folding no_fold = current_protein;
+        no_fold.consecutiveH = consecutiveH();
+        no_fold.consecutiveC = consecutiveC();
+
+        //After no folding, folding to the left
+        Folding no_fold_left = new Folding(chain);
+        copy(no_fold_left,no_fold);
+        no_fold_left.consecutiveH = consecutiveH();
+        no_fold_left.consecutiveC = consecutiveC();
+        no_fold_left.foldLeft(i+1);
+
+        //After no folding, folding to the right
+        Folding no_fold_right = new Folding(chain);
+        copy(no_fold_right,no_fold);
+        no_fold_right.consecutiveH = consecutiveH();
+        no_fold_right.consecutiveC = consecutiveC();
+        no_fold_right.foldRight(i+1);
+
+        //Sum of (straight&left), (straight&straight), and (straight&right)
+        return protein.stability + no_fold_left.stability + no_fold_right.stability;
     }
 
 
@@ -131,16 +214,4 @@ public class Main {
 			child.foldingArray[j].nextposition=parent.foldingArray[j].nextposition;
 		}
 	}
-
-
-
-//	static void sleep(int t) {
-//		try {
-//			TimeUnit.MILLISECONDS.sleep(t);
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//	}
-
 }
