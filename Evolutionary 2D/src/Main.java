@@ -3,67 +3,80 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JFrame;
 
 public class Main {
-	final static int POPULATION = 10000;
-	final static int CARRYOVER = 2000; // number of parents selected to generate children
+	
+	//-----------------------------------------SETTINGS-----------------------------------------------
+	final static int POPULATION = 10000; //number of proteins in a generation
+	final static int GENERATIONS = 1000; //number of generations
+	final static int CARRYOVER =2000; // number of parents selected to generate children
 	final static int TOP = 10; // the number of top proteins to be cloned to the next generation
 
-	// Probability of each mutation type occurring. (Note that A retracing mutation
-	// is
-	// extrapolation from values below)
+	 
 	final static double PROB_TYPE1 = 0.8; // Single Rotation probability
 	final static double PROB_TYPE2 = 0; // Double Rotation probability
 	final static double PROB_TYPE3 = 0.2; // Crank
+	//(Note that a retracing mutation is extrapolated from values above)
 
-	final static boolean PROTECTION = false; // True: Child protection is activated
+	final static boolean PROTECTION = true; // True: Child protection is activated
 	final static int PROTECTION_GEN = 10; // Number of generations for which to protect top children
 
 	final static boolean GRAPHICS = false;
+	final static int RUNS = 100;
 
-	static String chain = "PPHHHPHHHHHHHHPPPHHHHHHHHHHPHPPPHHHHHHHHHHHHPPPPHHHHHHPHHPHP";
+	static String chain = "HCPHPHPHCHHHHPCCPPHPPPHPPPPCPPPHPPPHPHHHHCHPHPHPHH";
+	//-------------------------------------------------------------------------------------------------
+	
+	
+	
 	static GraphicsOnly app;
 	static Folding[] generation;
 	static Folding[] selection = new Folding[CARRYOVER];
 	static Folding[] top = new Folding[TOP];
 	static int gen;
 
+
 	public static void main(String[] args) {
-		long startTime;
-		long endTime;
-		long duration;
-		initialize();
+		try {
+			initialize();
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			System.exit(1);
+		}
 
-		for (int i = 0; i < 100; i++) {
-			startTime = System.nanoTime();
-
+		for (int i = 0; i < RUNS; i++) {
 			simulate();
 			reset();
-			endTime = System.nanoTime();
-			duration = (endTime - startTime);
-			// System.out.println("Iteration #"+i+" ended in " + duration/1000000.0 +"ms");
-
+			
 		}
 	}
 
-	static void initialize() {
+	static void initialize() throws Exception {
+		if(chain.length()<13 && (PROB_TYPE1+PROB_TYPE2+PROB_TYPE3<1)) {
+			throw new Exception("Retracing Mutation not available for proteins of size 12 and under");
+			
+		}
 		generation = new Folding[POPULATION];
 		gen = 0;
 		int consecutiveH = consecutiveH();
 		int consecutiveC = consecutiveC();
-
+		int consecutiveHC = consecutiveHC();
+		
 		for (int i = 0; i < POPULATION; i++) {
 			generation[i] = new Folding(chain);
 			generation[i].consecutiveH = consecutiveH;
 			generation[i].consecutiveC = consecutiveC;
+			generation[i].consecutiveHC = consecutiveHC;
 		}
 		for (int i = 0; i < CARRYOVER; i++) {
 			selection[i] = new Folding(chain);
 			selection[i].consecutiveH = consecutiveH;
 			selection[i].consecutiveC = consecutiveC;
+			generation[i].consecutiveHC = consecutiveHC;
 		}
 		for (int i = 0; i < TOP; i++) {
 			top[i] = new Folding(chain);
 			top[i].consecutiveH = consecutiveH;
 			top[i].consecutiveC = consecutiveC;
+			generation[i].consecutiveHC = consecutiveHC;
 		}
 
 		if (GRAPHICS) {
@@ -85,10 +98,8 @@ public class Main {
 	static int simulate() {
 
 		Folding M = new Folding(chain);
-		int sinceLast = 0;
-		int prev = 0;
 		int genAtMax = 0;
-		while (gen < 1000) {
+		while (gen < GENERATIONS ) {
 			gen++;
 			boolean newMax = false;
 
@@ -101,10 +112,6 @@ public class Main {
 			if (newMax) {
 				M = M.CopyObject();
 				genAtMax = gen;
-				prev = sinceLast;
-				sinceLast = 0;
-			} else {
-				sinceLast++;
 			}
 
 			int genMax = 0;
@@ -117,8 +124,7 @@ public class Main {
 			}
 
 			if (GRAPHICS) {
-				// app.refreshImage(generation[genIndex].graphics(),"Max: " + M.stability + "
-				// Stability: " + generation[genIndex].stability + " Gen: " + gen);
+				 app.refreshImage(generation[genIndex].graphics(),"Max: " + M.stability + " Stability: " + generation[genIndex].stability + " Gen: " + gen);
 			}
 
 			nextGen();
@@ -128,8 +134,7 @@ public class Main {
 		if (GRAPHICS) {
 			app.refreshImage(M.graphics(), "Max: " + M.stability);
 		}
-		System.out.println(M.stability + " , " + genAtMax + "  , " + prev);
-		// System.out.println(M.stability);
+		System.out.println("Stability: "+M.stability);
 		return M.stability;
 
 	}
@@ -208,7 +213,6 @@ public class Main {
 					indexR = j;
 				else
 					indexL = j;
-				// System.out.println(indexL +" , "+indexR+" , "+j);
 
 			}
 			copy(selection[i], generation[indexR]);
@@ -262,6 +266,16 @@ public class Main {
 		int count = 0;
 		for (int i = 0; i < chain.length() - 1; i++) {
 			if (chain.charAt(i) == 'C' && chain.charAt(i + 1) == 'C')
+				count++;
+		}
+		return count;
+	}
+	static int consecutiveHC() {
+		int count = 0;
+		for (int i = 0; i < chain.length() - 1; i++) {
+			if (chain.charAt(i) == 'H' && chain.charAt(i + 1) == 'C')
+				count++;
+			if (chain.charAt(i) == 'C' && chain.charAt(i + 1) == 'H')
 				count++;
 		}
 		return count;

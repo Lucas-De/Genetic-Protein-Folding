@@ -8,6 +8,7 @@ public class Folding {
 	int stability = 0;
 	int consecutiveH;
 	int consecutiveC;
+	int consecutiveHC;
 	int protection;
 	static char[][] canvas;
 	int score;
@@ -290,6 +291,14 @@ public class Folding {
 					score += 5;
 				if (canvas[x][y - 1] == 'C')
 					score += 5;
+				if (canvas[x - 1][y] == 'H')
+					score += 2;
+				if (canvas[x + 1][y] == 'H')
+					score += 2;
+				if (canvas[x][y + 1] == 'H')
+					score += 2;
+				if (canvas[x][y - 1] == 'H')
+					score += 2;
 			}
 
 			switch (aminoArray[i].nextposition) {
@@ -307,7 +316,7 @@ public class Folding {
 				break;
 			}
 		}
-		stability = (int) (score / 2.0) - consecutiveH - consecutiveC * 5;
+		stability = (int) (score / 2.0) - consecutiveH - consecutiveC * 5 - consecutiveHC;
 	}
 
 	void mutate() {
