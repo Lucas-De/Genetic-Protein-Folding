@@ -1,6 +1,6 @@
 # Evolutionary Algorithm:
 
-**POPULATION** : Number of proteins in a gneration<br />
+**POPULATION** : Number of proteins in a generation<br />
 **GENERATIONS** : Number of generations<br />
 **CARRYOVER** : Number of parents selected to generate children<br />
 **TOP** : Number of top proteins to be cloned to the next generation<br />
