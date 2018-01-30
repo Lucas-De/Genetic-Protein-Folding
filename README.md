@@ -16,3 +16,9 @@
 **CHAIN** : String of Amino acid "H","C", "P" for which the optimal stability should be found<br />
 
 
+# Beam Search:
+
+**POPULATION** : The number of top protein folds in a layer that wil be chosen to fold on
+**gen** : The current generation updates with each iteration
+**counter** : The counter of each layer
+**CHAIN** : String of Amino acid "H", "P" for which the optimal stability should be found<br />
