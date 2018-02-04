@@ -22,3 +22,13 @@
 **gen** : The current generation updates with each iteration<br />
 **counter** : The counter of each layer<br />
 **CHAIN** : String of Amino acid "H", "P" for which the optimal stability should be found<br />
+
+# Hill Climbing (x=2) & Simulated Annealing (x=2) :
+
+**repeat** : Number of total algorithm runs<br /> 
+**chain** : String of Amino acid "H", "P" for which the optimal stability should be found<br />
+**alpha** : Initial probability that algorithm will fold to the direction with the highest stability score<br />
+**beta** : Initial probability that algorithm will fold to one of the directions without the highest stability score<br />
+**smooth_alpha** : Cooling off alpha value as the folding continues <br />
+**smooth_beta** : Cooling off beta value as the folding continues <br />
+**Please note that alpha, beta, smooth_alpha, and smooth_beta values are zero (0) and repeat value is one (1) for hill climbing.**
